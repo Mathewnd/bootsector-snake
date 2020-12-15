@@ -33,8 +33,6 @@ int 10h
 
 ;fill out the empty tiles with the emtpy tile character
 
-;I use a small ~~bug~~ feature in my code in which if DX is 0, you can write to any entry using CX 
-
 mov cx,2000
 
 fill_empty_tiles:
@@ -44,7 +42,6 @@ push cx
 mov al,empty_tile_char
 mov ah,empty_tile_color ; brown colour with black background
 dec cx
-xor dx,dx
 call write_char
 
 pop cx
@@ -69,6 +66,9 @@ mov [input_player_data_copy], dl
 .get_input:
 
 ;get player input
+
+mov dh,[player_data] ;load player data
+and dh,0b11111100 ;zero the direction bits
 
 mov ah,1 ; get keyboard status
 int 16h
@@ -95,46 +95,36 @@ je .left_arr
 cmp dl,0b01
 je .input_process_done
 
-mov dh,[player_data]
-and dh,0b11111100
-mov [player_data],dh
-
-jmp .input_process_done
+jmp .input_change
 
 .left_arr:
 
 test dl,dl
 jz .input_process_done
 
-mov dh,[player_data]
-and dh,0b11111100
 or  dh,0b00000001
-mov [player_data],dh
 
-jmp .input_process_done
+jmp .input_change
 
 .up_arr:
 
 cmp dl,0b10
 je .input_process_done
 
-mov dh,[player_data]
-and dh,0b11111100
 or  dh,0b00000011
-mov [player_data],dh
 
-jmp .input_process_done
+jmp .input_change
 
 .down_arr:
 
 cmp dl,0b11
 je .input_process_done
 
-mov dh,[player_data]
-and dh,0b11111100
 or  dh,0b00000010
-mov [player_data],dh
 
+.input_change:
+
+mov [player_data],dh
 
 .input_process_done:
 
@@ -212,9 +202,6 @@ jz lose
 
 .check_end:
 
-
-
-
 ;check if non empty (was supposed to be another way, but I just did it this way as a lazy fix to a problem)
 
 pop cx
@@ -234,7 +221,6 @@ mov [player_pos], cx
 
 ;update graphics
 
-xor dx,dx
 mov al, snake_char
 mov ah, snake_colour
 
@@ -299,7 +285,6 @@ mov [last_segment], cx ;save the new last pos
 
 pop cx
 
-xor dx,dx
 mov al, empty_tile_char
 mov ah, empty_tile_color
 
@@ -335,9 +320,6 @@ mov cx,1 ;set cx to not eaten
 .eat_done:
 
 push cx ; push into stack for later use
-
-
-
 
 
 
@@ -420,31 +402,22 @@ ret
 
 ;######################################################
 
-;writes character and colour (ax) at (cx,dx) 
+;writes character and colour (ax) at (cx) 
 
 ;al = character
 ;ah = colour, etc.
 
 write_char:
 
-push ax ; save the character to the stack
+;multiply cx by 2 cause the entries are words and not bytes
 
-mov ax, 80
-mul dx ; multiply the number of columns with the y position
-add ax,cx ;add the x position to get the entry to write to
-
-;multiply by 2 cause the entries are words and not bytes
-
-shl ax,1
+shl cx,1
 
 ;now that we have the offset, set ES:BX to the adress of the entry to change
 
-mov bx,ax ;put the offset on bx
-
-mov ax,0xB800
-mov es,ax ; set ES To the adress
-
-pop ax ; retrieve the character from the stack
+mov bx,0xB800
+mov es,bx ; set ES To the adress
+mov bx,cx ;put the offset on bx
 
 mov [es:bx],ax ; set the entry
 

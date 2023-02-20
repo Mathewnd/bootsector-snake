@@ -1,4 +1,4 @@
-Simple Snake bootsector snake clone.
+Simple bootsector snake clone.
 
 To assemble use NASM
 

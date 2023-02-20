@@ -1,4 +1,4 @@
-Simple Snake clone made in x86 assembly to run in under 512 bytes.
+Simple Snake bootsector snake clone.
 
 To assemble use NASM
 
@@ -7,4 +7,3 @@ To assemble use NASM
 To test it out use QEMU
 
     qemu-system-i386 -fda out.bin
-
